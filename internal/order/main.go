@@ -2,21 +2,17 @@ package main
 
 import (
 	"log"
-	"net/http"
+
+	"github.com/jialechen7/gorder-v2/common/config"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	log.Println("Listening on port 8082")
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		log.Printf("%v", request.URL)
-		_, _ = writer.Write([]byte("<h1>Welcome to gorder-v2 homepage</h1>"))
-	})
-	mux.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
-		log.Printf("%v", request.URL)
-		_, _ = writer.Write([]byte("pong"))
-	})
-	if err := http.ListenAndServe(":8082", mux); err != nil {
+func init() {
+	if err := config.NewViperConfig(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func main() {
+	log.Printf("%v", viper.Get("order"))
 }
