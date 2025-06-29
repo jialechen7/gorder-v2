@@ -5,6 +5,7 @@ import (
 
 	"github.com/jialechen7/gorder-v2/common/decorator"
 	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
+	"github.com/jialechen7/gorder-v2/order/app/query"
 	domain "github.com/jialechen7/gorder-v2/order/domain/order"
 	"github.com/sirupsen/logrus"
 )
@@ -22,11 +23,12 @@ type CreateOrderHandler decorator.CommandHandler[CreateOrder, *CreateOrderResult
 
 type createOrderHandler struct {
 	orderRepo domain.Repository
-	//stockGrpc
+	stockGRPC query.StockService
 }
 
 func NewCreateOrderHandler(
 	orderRepo domain.Repository,
+	stockGRPC query.StockService,
 	logger *logrus.Entry,
 	metricsClient decorator.MetricsClient,
 ) CreateOrderHandler {
@@ -34,14 +36,16 @@ func NewCreateOrderHandler(
 		panic("orderRepo is nil")
 	}
 	return decorator.ApplyCommandDecorators[CreateOrder, *CreateOrderResult](
-		createOrderHandler{orderRepo: orderRepo},
+		createOrderHandler{orderRepo: orderRepo, stockGRPC: stockGRPC},
 		logger,
 		metricsClient,
 	)
 }
 
 func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*CreateOrderResult, error) {
-	// TODO: call stock grpc to get items
+	err := c.stockGRPC.CheckIfItemsInStock(ctx, cmd.Items)
+	resp, err := c.stockGRPC.GetItems(ctx, []string{"123"})
+	logrus.Info("[createOrderHandler] resp from stockGRPC", resp)
 	var stockResponse []*orderpb.Item
 	for _, item := range cmd.Items {
 		stockResponse = append(stockResponse, &orderpb.Item{
