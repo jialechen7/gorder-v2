@@ -10,3 +10,6 @@ stock:
   server-to-run: grpc
   http-addr: 127.0.0.1:8283
   grpc-addr: 127.0.0.1:5003
+
+consul:
+  addr: 127.0.0.1:8500

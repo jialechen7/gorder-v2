@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/jialechen7/gorder-v2/common/config"
+	"github.com/jialechen7/gorder-v2/common/discovery"
 	"github.com/jialechen7/gorder-v2/common/genproto/stockpb"
 	"github.com/jialechen7/gorder-v2/common/server"
 	"github.com/jialechen7/gorder-v2/stock/ports"
@@ -27,6 +28,15 @@ func main() {
 	defer cancel()
 
 	application := service.NewApplication(ctx)
+
+	deregisterFunc, err := discovery.RegisterToConsul(ctx, serviceName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		_ = deregisterFunc()
+	}()
+
 	switch serverType {
 	case "grpc":
 		server.RunGRPCServer(serviceName, func(server *grpc.Server) {
