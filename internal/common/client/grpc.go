@@ -3,14 +3,22 @@ package client
 import (
 	"context"
 
+	"github.com/jialechen7/gorder-v2/common/discovery"
 	"github.com/jialechen7/gorder-v2/common/genproto/stockpb"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func NewStockGRPCClient(ctx context.Context) (client stockpb.StockServiceClient, close func() error, err error) {
-	grpcAddr := viper.GetString("stock.grpc-addr")
+	grpcAddr, err := discovery.GetServiceAddr(ctx, viper.GetString("stock.service-name"))
+	if err != nil {
+		return nil, func() error { return nil }, err
+	}
+	if grpcAddr == "" {
+		logrus.Warn("No stock service address found")
+	}
 	opts, err := grpcDialOpts()
 	if err != nil {
 		return nil, func() error { return nil }, err
