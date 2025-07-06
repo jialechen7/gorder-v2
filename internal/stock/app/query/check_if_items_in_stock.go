@@ -34,12 +34,18 @@ func NewCheckIfItemsInStockHandler(
 	)
 }
 
+// TODO: 替换为真实的 PriceID
+func getPriceID(_ string) string {
+	return "price_1Rh9ElRxy3YYz85Em4RAlOvR"
+}
+
 func (c checkIfItemsInStockHandler) Handle(ctx context.Context, query CheckIfItemsInStock) ([]*orderpb.Item, error) {
 	var results []*orderpb.Item
 	for _, item := range query.Items {
 		results = append(results, &orderpb.Item{
 			ID:       item.ID,
 			Quantity: item.Quantity,
+			PriceID:  getPriceID(item.ID),
 		})
 	}
 	return results, nil
