@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 
 	"github.com/jialechen7/gorder-v2/common/broker"
-	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
-	"github.com/jialechen7/gorder-v2/payment/app"
-	"github.com/jialechen7/gorder-v2/payment/app/command"
+	"github.com/jialechen7/gorder-v2/order/app"
+	"github.com/jialechen7/gorder-v2/order/app/command"
+	domain "github.com/jialechen7/gorder-v2/order/domain/order"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
@@ -23,7 +23,12 @@ func NewConsumer(app app.Application) *Consumer {
 }
 
 func (c *Consumer) Listen(ch *amqp.Channel) {
-	q, err := ch.QueueDeclare(broker.EventOrderCreated, true, false, false, false, nil)
+	q, err := ch.QueueDeclare(broker.EventOrderPaid, true, false, true, false, nil)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	err = ch.QueueBind(q.Name, "", broker.EventOrderPaid, true, nil)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -44,22 +49,29 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 }
 
 func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, ch *amqp.Channel) {
-	logrus.Infof("Payment receive a message from %s, msg=%s", q.Name, msg.Body)
-
-	o := &orderpb.Order{}
+	logrus.Infof("Order receive a message from %s, msg=%s", q.Name, msg.Body)
+	o := &domain.Order{}
 	if err := json.Unmarshal(msg.Body, o); err != nil {
-		logrus.Infof("fail to unmarshal order: %s", err)
+		logrus.Warnf("error unmarshal msg.body into domain.order, err = %v", err)
 		_ = msg.Nack(false, false)
 		return
 	}
-	_, err := c.app.Commands.CreatePayment.Handle(context.Background(), command.CreatePayment{
+
+	_, err := c.app.Commands.UpdateOrder.Handle(context.Background(), command.UpdateOrder{
 		Order: o,
+		UpdateFn: func(ctx context.Context, order *domain.Order) (*domain.Order, error) {
+			if err := order.IsPaid(); err != nil {
+				return nil, err
+			}
+			return order, nil
+		},
 	})
 	if err != nil {
+		logrus.Infof("error updating order, orderID = %s, err = %v", o.ID, err)
 		// TODO: retry
-		logrus.Infof("fail to create payment: %s", err)
-		_ = msg.Nack(false, false)
 		return
 	}
+
 	_ = msg.Ack(false)
+	logrus.Infof("order consume paid event success!")
 }

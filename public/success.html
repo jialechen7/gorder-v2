@@ -128,22 +128,23 @@
           }
         }
          */
-        if (data.data.status === 'waiting_for_payment') {
-            order.status = '等待支付...';
-            document.getElementById('orderStatus').innerText = order.status;
+        console.log(data.data)
+        if (data.data.Order.Status === 'waiting_for_payment') {
+            order.Status = '等待支付...';
+            document.getElementById('orderStatus').innerText = order.Status;
             document.querySelector('.after-payment-popup').style.display = 'block';
-            document.getElementById('payment-link').href = data.data.payment_link;
+            document.getElementById('payment-link').href = data.data.Order.PaymentLink;
         }
-        if (data.data.status === 'paid') {
-            order.status = '已支付成功，请等待...';
-            document.getElementById('orderStatus').innerText = order.status;
+        if (data.data.Order.Status === 'paid') {
+            order.Status = '已支付成功，请等待...';
+            document.getElementById('orderStatus').innerText = order.Status;
             setTimeout(getOrder, 5000);
-        } else if (data.data.status === 'ready') {
-            order.status = '已完成...';
+        } else if (data.data.Order.Status === 'ready') {
+            order.Status = '已完成...';
             document.querySelector('.after-payment-popup').style.display = 'none';
             document.querySelector('.ready-popup').style.display = 'block';
             document.getElementById('orderID').innerText = orderID;
-            document.getElementById('orderStatus').innerText = order.status;
+            document.getElementById('orderStatus').innerText = order.Status;
         } else {
             setTimeout(getOrder, 5000);
         }

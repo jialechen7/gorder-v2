@@ -28,3 +28,4 @@ rabbitmq:
   port: 5672
 
 stripe_key: "${STRIPE_KEY}"
+endpoint_stripe_secret: "${ENDPOINT_STRIPE_SECRET}"

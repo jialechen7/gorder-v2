@@ -1,6 +1,7 @@
 package ports
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,12 @@ func (H HTTPServer) PostCustomerCustomerIDOrders(c *gin.Context, customerID stri
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "OK", "customer_id": req.CustomerID, "order_id": r.OrderID})
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "OK",
+		"customer_id":  req.CustomerID,
+		"order_id":     r.OrderID,
+		"redirect_url": fmt.Sprintf("http://localhost:8282/success?customerID=%s&orderID=%s", req.CustomerID, r.OrderID),
+	})
 }
 
 func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerID string, orderID string) {
@@ -48,6 +54,8 @@ func (H HTTPServer) GetCustomerCustomerIDOrdersOrderID(c *gin.Context, customerI
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "OK",
-		"data":    o,
+		"data": gin.H{
+			"Order": o,
+		},
 	})
 }

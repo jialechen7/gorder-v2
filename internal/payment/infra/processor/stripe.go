@@ -3,6 +3,7 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
 	"github.com/stripe/stripe-go/v82"
@@ -21,7 +22,7 @@ func NewStripeProcessor(apiKey string) *StripeProcessor {
 	return &StripeProcessor{apiKey: apiKey}
 }
 
-var (
+const (
 	successURL = "http://localhost:8282/success"
 )
 
@@ -35,15 +36,16 @@ func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.O
 	}
 	marshalledItems, _ := json.Marshal(items)
 	metadata := map[string]string{
-		"orderID":    order.ID,
-		"customerID": order.CustomerID,
-		"status":     order.Status,
-		"items":      string(marshalledItems),
+		"orderID":     order.ID,
+		"customerID":  order.CustomerID,
+		"status":      order.Status,
+		"items":       string(marshalledItems),
+		"paymentLink": order.PaymentLink,
 	}
 	params := &stripe.CheckoutSessionParams{
 		LineItems:  items,
 		Mode:       stripe.String(stripe.CheckoutSessionModePayment),
-		SuccessURL: stripe.String(successURL),
+		SuccessURL: stripe.String(fmt.Sprintf("%s?customerID=%s&orderID=%s", successURL, order.CustomerID, order.ID)),
 		Metadata:   metadata,
 	}
 	result, err := session.New(params)
