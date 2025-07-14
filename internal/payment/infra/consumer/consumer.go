@@ -36,16 +36,14 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	forever := make(chan struct{})
 	go func() {
 		for msg := range msgs {
-			c.handleMessage(msg, q, ch)
+			c.handleMessage(msg)
 		}
 	}()
 
 	<-forever
 }
 
-func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue, ch *amqp.Channel) {
-	logrus.Infof("Payment receive a message from %s, msg=%s", q.Name, msg.Body)
-
+func (c *Consumer) handleMessage(msg amqp.Delivery) {
 	o := &orderpb.Order{}
 	if err := json.Unmarshal(msg.Body, o); err != nil {
 		logrus.Infof("fail to unmarshal order: %s", err)
