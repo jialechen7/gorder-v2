@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
+	"github.com/jialechen7/gorder-v2/common/tracing"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/checkout/session"
 )
@@ -27,6 +28,8 @@ const (
 )
 
 func (s StripeProcessor) CreatePaymentLink(ctx context.Context, order *orderpb.Order) (string, error) {
+	ctx, span := tracing.Start(ctx, "stripe_processor.create_payment_link")
+	defer span.End()
 	var items []*stripe.CheckoutSessionLineItemParams
 	for _, item := range order.Items {
 		items = append(items, &stripe.CheckoutSessionLineItemParams{

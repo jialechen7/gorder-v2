@@ -11,9 +11,11 @@ import (
 	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
 	"github.com/jialechen7/gorder-v2/common/logging"
 	"github.com/jialechen7/gorder-v2/common/server"
+	"github.com/jialechen7/gorder-v2/common/tracing"
 	"github.com/jialechen7/gorder-v2/order/infra/consumer"
 	"github.com/jialechen7/gorder-v2/order/ports"
 	"github.com/jialechen7/gorder-v2/order/service"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -30,6 +32,12 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	shutdown, err := tracing.InitJaegerProvider(viper.GetString("jaeger.url"), serviceName)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer shutdown(ctx)
 
 	application, cleanup := service.NewApplication(ctx)
 	defer cleanup()

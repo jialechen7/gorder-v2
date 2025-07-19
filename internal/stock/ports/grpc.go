@@ -4,6 +4,7 @@ import (
 	context "context"
 
 	"github.com/jialechen7/gorder-v2/common/genproto/stockpb"
+	"github.com/jialechen7/gorder-v2/common/tracing"
 	"github.com/jialechen7/gorder-v2/stock/app"
 	"github.com/jialechen7/gorder-v2/stock/app/query"
 )
@@ -17,6 +18,8 @@ func NewGRPCServer(app app.Application) *GRPCServer {
 }
 
 func (G GRPCServer) GetItems(ctx context.Context, request *stockpb.GetItemsRequest) (*stockpb.GetItemsResponse, error) {
+	ctx, span := tracing.Start(ctx, "GetItems")
+	defer span.End()
 	items, err := G.app.Queries.GetItems.Handle(ctx, query.GetItems{ItemIDs: request.ItemIDs})
 	if err != nil {
 		return nil, err
@@ -26,6 +29,8 @@ func (G GRPCServer) GetItems(ctx context.Context, request *stockpb.GetItemsReque
 }
 
 func (G GRPCServer) CheckIfItemsInStock(ctx context.Context, request *stockpb.CheckIfItemsInStockRequest) (*stockpb.CheckIfItemsInStockResponse, error) {
+	ctx, span := tracing.Start(ctx, "CheckIfItemsInStock")
+	defer span.End()
 	items, err := G.app.Queries.CheckIfItemsInStock.Handle(ctx, query.CheckIfItemsInStock{Items: request.Items})
 	if err != nil {
 		return nil, err
