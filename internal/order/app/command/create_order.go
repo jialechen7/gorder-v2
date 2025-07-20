@@ -8,9 +8,10 @@ import (
 
 	"github.com/jialechen7/gorder-v2/common/broker"
 	"github.com/jialechen7/gorder-v2/common/decorator"
-	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
 	"github.com/jialechen7/gorder-v2/order/app/query"
+	"github.com/jialechen7/gorder-v2/order/convertor"
 	domain "github.com/jialechen7/gorder-v2/order/domain/order"
+	"github.com/jialechen7/gorder-v2/order/entity"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
@@ -18,7 +19,7 @@ import (
 
 type CreateOrder struct {
 	CustomerID string
-	Items      []*orderpb.ItemWithQuantity
+	Items      []*entity.ItemWithQuantity
 }
 
 type CreateOrderResult struct {
@@ -69,7 +70,7 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	t := otel.Tracer("rabbitmq")
 	ctx, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.publish", q.Name))
 	defer span.End()
-	
+
 	validItems, err := c.validate(ctx, cmd.Items)
 	if err != nil {
 		return nil, err
@@ -104,27 +105,27 @@ func (c createOrderHandler) Handle(ctx context.Context, cmd CreateOrder) (*Creat
 	}, nil
 }
 
-func (c createOrderHandler) validate(ctx context.Context, items []*orderpb.ItemWithQuantity) ([]*orderpb.Item, error) {
+func (c createOrderHandler) validate(ctx context.Context, items []*entity.ItemWithQuantity) ([]*entity.Item, error) {
 	if len(items) == 0 {
 		return nil, errors.New("must have at least one item")
 	}
 
 	items = packItems(items)
-	resp, err := c.stockGRPC.CheckIfItemsInStock(ctx, items)
+	resp, err := c.stockGRPC.CheckIfItemsInStock(ctx, convertor.NewItemWithQuantityConvertor().EntitiesToProtos(items))
 	if err != nil {
 		return nil, err
 	}
-	return resp.Items, nil
+	return convertor.NewItemConvertor().ProtosToEntities(resp.Items), nil
 }
 
-func packItems(items []*orderpb.ItemWithQuantity) []*orderpb.ItemWithQuantity {
+func packItems(items []*entity.ItemWithQuantity) []*entity.ItemWithQuantity {
 	merged := map[string]int32{}
 	for _, item := range items {
 		merged[item.ID] += item.Quantity
 	}
-	var result []*orderpb.ItemWithQuantity
+	var result []*entity.ItemWithQuantity
 	for id, quantity := range merged {
-		result = append(result, &orderpb.ItemWithQuantity{
+		result = append(result, &entity.ItemWithQuantity{
 			ID:       id,
 			Quantity: quantity,
 		})

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
+	"github.com/jialechen7/gorder-v2/order/entity"
 	"github.com/stripe/stripe-go/v82"
 )
 
@@ -13,10 +13,10 @@ type Order struct {
 	CustomerID  string
 	Status      string
 	PaymentLink string
-	Items       []*orderpb.Item
+	Items       []*entity.Item
 }
 
-func NewOrder(ID string, customerID string, status string, paymentLink string, items []*orderpb.Item) (*Order, error) {
+func NewOrder(ID string, customerID string, status string, paymentLink string, items []*entity.Item) (*Order, error) {
 	if ID == "" {
 		return nil, errors.New("empty ID")
 	}
@@ -30,16 +30,6 @@ func NewOrder(ID string, customerID string, status string, paymentLink string, i
 		return nil, errors.New("empty items")
 	}
 	return &Order{ID: ID, CustomerID: customerID, Status: status, PaymentLink: paymentLink, Items: items}, nil
-}
-
-func (o *Order) ToProto() *orderpb.Order {
-	return &orderpb.Order{
-		ID:          o.ID,
-		CustomerID:  o.CustomerID,
-		Status:      o.Status,
-		PaymentLink: o.PaymentLink,
-		Items:       o.Items,
-	}
 }
 
 func (o *Order) IsPaid() error {
