@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jialechen7/gorder-v2/common/broker"
-	"github.com/jialechen7/gorder-v2/common/config"
+	_ "github.com/jialechen7/gorder-v2/common/config"
 	"github.com/jialechen7/gorder-v2/common/logging"
 	"github.com/jialechen7/gorder-v2/common/server"
 	"github.com/jialechen7/gorder-v2/common/tracing"
@@ -16,9 +16,6 @@ import (
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		logrus.Fatal(err)
-	}
 }
 
 func main() {

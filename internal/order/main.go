@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jialechen7/gorder-v2/common/broker"
-	"github.com/jialechen7/gorder-v2/common/config"
+	_ "github.com/jialechen7/gorder-v2/common/config"
 	"github.com/jialechen7/gorder-v2/common/discovery"
 	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
 	"github.com/jialechen7/gorder-v2/common/logging"
@@ -22,9 +22,6 @@ import (
 
 func init() {
 	logging.Init()
-	if err := config.NewViperConfig(); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func main() {

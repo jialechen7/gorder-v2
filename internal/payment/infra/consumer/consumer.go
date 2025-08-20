@@ -38,35 +38,45 @@ func (c *Consumer) Listen(ch *amqp.Channel) {
 	forever := make(chan struct{})
 	go func() {
 		for msg := range msgs {
-			c.handleMessage(msg, q)
+			c.handleMessage(ch, msg, q)
 		}
 	}()
 
 	<-forever
 }
 
-func (c *Consumer) handleMessage(msg amqp.Delivery, q amqp.Queue) {
+func (c *Consumer) handleMessage(ch *amqp.Channel, msg amqp.Delivery, q amqp.Queue) {
 	ctx := broker.ExtractRabbitMQHeaders(context.Background(), msg.Headers)
 	t := otel.Tracer("rabbitmq")
 	_, span := t.Start(ctx, fmt.Sprintf("rabbitmq.%s.consume", q.Name))
 	defer span.End()
 
+	var err error
+	defer func() {
+		if err != nil {
+			_ = msg.Nack(false, false)
+		} else {
+			_ = msg.Ack(false)
+		}
+	}()
+
 	o := &orderpb.Order{}
-	if err := json.Unmarshal(msg.Body, o); err != nil {
+	if err = json.Unmarshal(msg.Body, o); err != nil {
 		logrus.Infof("fail to unmarshal order: %s", err)
 		_ = msg.Nack(false, false)
 		return
 	}
-	_, err := c.app.Commands.CreatePayment.Handle(ctx, command.CreatePayment{
+
+	_, err = c.app.Commands.CreatePayment.Handle(ctx, command.CreatePayment{
 		Order: o,
 	})
 	if err != nil {
-		// TODO: retry
 		logrus.Infof("fail to create payment: %s", err)
-		_ = msg.Nack(false, false)
+		if err = broker.HandleRetry(ctx, ch, &msg); err != nil {
+			logrus.Warnf("retry_error, error handling retry, messageID = %s, err = %v", msg.MessageId, err)
+		}
 		return
 	}
 
 	span.AddEvent("payment.created")
-	_ = msg.Ack(false)
 }
