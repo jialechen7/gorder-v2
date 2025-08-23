@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+
+	"github.com/jialechen7/gorder-v2/common/interceptor"
 )
 
 func init() {
@@ -37,6 +39,7 @@ func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) 
 		grpc.ChainUnaryInterceptor(
 			grpc_tags.UnaryServerInterceptor(grpc_tags.WithFieldExtractor(grpc_tags.CodeGenRequestFieldExtractor)),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
+			interceptor.ErrorInterceptor(),
 		),
 	)
 	registerServer(grpcServer)

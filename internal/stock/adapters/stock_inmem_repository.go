@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/jialechen7/gorder-v2/common/genproto/orderpb"
-	domain "github.com/jialechen7/gorder-v2/stock/domain/stock"
+	"github.com/jialechen7/gorder-v2/stock/domain"
 )
 
 type MemoryStockRepository struct {
@@ -64,7 +64,5 @@ func (m MemoryStockRepository) GetItems(ctx context.Context, ids []string) ([]*o
 	if len(items) == len(ids) {
 		return items, nil
 	}
-	return nil, domain.NotFoundError{
-		Missing: missing,
-	}
+	return nil, domain.NewItemsNotFoundError(missing)
 }

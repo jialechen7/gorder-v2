@@ -25,7 +25,6 @@ func (G GRPCServer) GetItems(ctx context.Context, request *stockpb.GetItemsReque
 		return nil, err
 	}
 	return &stockpb.GetItemsResponse{Items: items}, nil
-
 }
 
 func (G GRPCServer) CheckIfItemsInStock(ctx context.Context, request *stockpb.CheckIfItemsInStockRequest) (*stockpb.CheckIfItemsInStockResponse, error) {
